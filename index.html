@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>海外資産管理サポート v0.1 - 初期モックアップ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <!-- サイドバー -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo">bitwallet</div>
+      <h1>海外資産管理サポート</h1>
+      <div class="version">v0.1 初期モックアップ</div>
+    </div>
+    <div class="role-switch">
+      <label>表示モード</label>
+      <div class="role-tabs">
+        <button class="role-tab active" data-role="user">ユーザー</button>
+        <button class="role-tab" data-role="admin">管理者</button>
+      </div>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav"></nav>
+    <div class="sidebar-footer">静的モックアップ — API連携なし</div>
+  </aside>
+
+  <!-- メインエリア -->
+  <div class="main">
+    <header class="header">
+      <div>
+        <div class="header-title" id="header-title">ダッシュボード</div>
+        <div class="header-meta">海外金融機関の口座開設・手続き支援サービス</div>
+      </div>
+      <div class="header-user">
+        <span id="header-username">山田 太郎 様</span>
+        <div class="user-avatar">山</div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- 1. ユーザー向けダッシュボード -->
+      <div class="view active" id="view-user-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card navy">
+            <div class="stat-label">申込中の案件数</div>
+            <div class="stat-value">2</div>
+            <div class="stat-sub">うち書類確認中 1件</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-label">開設済み口座数</div>
+            <div class="stat-value">1</div>
+            <div class="stat-sub">ACLEDA Bank（カンボジア）</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">サポート中の金融機関数</div>
+            <div class="stat-value">3</div>
+            <div class="stat-sub">連携中の海外金融機関</div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-label">未提出書類</div>
+            <div class="stat-value">3</div>
+            <div class="stat-sub">早めのご提出をお願いします</div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <h2>最近の進捗</h2>
+              <button class="btn btn-outline btn-sm" onclick="navigateTo('application-status')">すべて見る</button>
+            </div>
+            <div class="card-body">
+              <div class="timeline">
+                <div class="timeline-item done">
+                  <div class="timeline-dot"></div>
+                  <div class="timeline-date">2026/06/15</div>
+                  <div class="timeline-title">海外金融機関審査中</div>
+                  <div class="timeline-desc">カンボジア銀行口座開設サポート — ACLEDA Bank</div>
+                </div>
+                <div class="timeline-item done">
+                  <div class="timeline-dot"></div>
+                  <div class="timeline-date">2026/06/10</div>
+                  <div class="timeline-title">海外金融機関へ提出済</div>
+                  <div class="timeline-desc">書類を現地金融機関へ提出しました</div>
+                </div>
+                <div class="timeline-item done">
+                  <div class="timeline-dot"></div>
+                  <div class="timeline-date">2026/06/03</div>
+                  <div class="timeline-title">書類確認中</div>
+                  <div class="timeline-desc">バングラデシュ証券口座開設サポート</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h2>クイックアクション</h2>
+            </div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <button class="btn btn-primary" onclick="navigateTo('service-list')"><i class="fa-solid fa-list"></i> サービス一覧を見る</button>
+                <button class="btn btn-outline" onclick="navigateTo('documents')"><i class="fa-solid fa-file-lines"></i> 必要書類を確認</button>
+                <button class="btn btn-outline" onclick="navigateTo('application-status')"><i class="fa-solid fa-clock-rotate-left"></i> 申込状況を確認</button>
+                <button class="btn btn-outline" onclick="navigateTo('transfer-support')"><i class="fa-solid fa-money-bill-transfer"></i> 送金サポート</button>
+              </div>
+              <div class="notice-box" style="margin-top:20px;margin-bottom:0">
+                <h4>サービスについて</h4>
+                <ul>
+                  <li>当社は投資助言・金融商品の推奨は行いません</li>
+                  <li>口座開設手続きの支援・進捗管理が中心のサービスです</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. サービス一覧 -->
+      <div class="view" id="view-service-list">
+        <div class="info-banner"><i class="fa-solid fa-circle-info"></i> 各サービスは口座開設・手続きのサポートです。金融商品の販売・投資助言は行いません。</div>
+        <div class="service-grid" id="service-grid"></div>
+      </div>
+
+      <!-- 3. サービス詳細 -->
+      <div class="view" id="view-service-detail">
+        <div id="service-detail-content"></div>
+      </div>
+
+      <!-- 4. 申込フロー -->
+      <div class="view" id="view-application-flow">
+        <div id="application-flow-content"></div>
+      </div>
+
+      <!-- 5. 書類アップロード -->
+      <div class="view" id="view-documents">
+        <div id="documents-content"></div>
+      </div>
+
+      <!-- 6. 申込状況・進捗確認 -->
+      <div class="view" id="view-application-status">
+        <div id="timeline-content"></div>
+      </div>
+
+      <!-- 送金サポート -->
+      <div class="view" id="view-transfer-support">
+        <div class="info-banner"><i class="fa-solid fa-circle-info"></i> 口座開設完了後、海外口座への送金手続きをサポートします。送金の実行はお客様ご自身で行います。</div>
+        <div class="card">
+          <div class="card-header"><h2>送金サポート案件</h2></div>
+          <div class="card-body">
+            <table class="data-table">
+              <thead>
+                <tr><th>案件ID</th><th>送金先</th><th>金融機関</th><th>ステータス</th><th>申請日</th><th></th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>TRF-2026-0012</td>
+                  <td>カンボジア</td>
+                  <td>ACLEDA Bank</td>
+                  <td><span class="badge badge-amber">手続き案内中</span></td>
+                  <td>—</td>
+                  <td><button class="btn btn-outline btn-sm">詳細</button></td>
+                </tr>
+                <tr>
+                  <td>TRF-2026-0008</td>
+                  <td>バングラデシュ</td>
+                  <td>Dhaka Securities Ltd.</td>
+                  <td><span class="badge badge-green">送金手続き完了</span></td>
+                  <td>2026/05/20</td>
+                  <td><button class="btn btn-outline btn-sm">詳細</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>送金手続きの流れ</h2></div>
+          <div class="card-body">
+            <div class="steps-bar" style="margin-bottom:0">
+              <div class="step-item done"><div class="step-circle"><i class="fa-solid fa-check"></i></div><span class="step-label">口座開設完了</span></div>
+              <div class="step-item done"><div class="step-circle"><i class="fa-solid fa-check"></i></div><span class="step-label">送金方法の案内</span></div>
+              <div class="step-item active"><div class="step-circle">3</div><span class="step-label">必要情報の確認</span></div>
+              <div class="step-item"><div class="step-circle">4</div><span class="step-label">送金手続き支援</span></div>
+              <div class="step-item"><div class="step-circle">5</div><span class="step-label">完了</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 取引履歴 -->
+      <div class="view" id="view-transaction-history">
+        <div class="card">
+          <div class="card-header"><h2>サポート手数料・取引履歴</h2></div>
+          <div class="card-body">
+            <table class="data-table">
+              <thead>
+                <tr><th>日付</th><th>種別</th><th>内容</th><th>金額</th><th>ステータス</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>2026/06/01</td>
+                  <td>サポート手数料</td>
+                  <td>カンボジア銀行口座開設サポート（APP-2026-0042）</td>
+                  <td>45,000円</td>
+                  <td><span class="badge badge-green">支払済</span></td>
+                </tr>
+                <tr>
+                  <td>2026/04/15</td>
+                  <td>サポート手数料</td>
+                  <td>バングラデシュ証券口座開設サポート（APP-2026-0031）</td>
+                  <td>55,000円</td>
+                  <td><span class="badge badge-green">支払済</span></td>
+                </tr>
+                <tr>
+                  <td>2026/05/20</td>
+                  <td>送金手続き支援</td>
+                  <td>送金サポート（TRF-2026-0008）</td>
+                  <td>15,000円</td>
+                  <td><span class="badge badge-green">支払済</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. 管理者向けダッシュボード -->
+      <div class="view" id="view-admin-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card navy">
+            <div class="stat-label">総申込件数</div>
+            <div class="stat-value">42</div>
+            <div class="stat-sub">累計</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">対応中案件</div>
+            <div class="stat-value">8</div>
+            <div class="stat-sub">審査中・書類確認中含む</div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-label">書類確認待ち</div>
+            <div class="stat-value">3</div>
+            <div class="stat-sub">要対応</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-label">口座開設完了件数</div>
+            <div class="stat-value">28</div>
+            <div class="stat-sub">累計</div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><h2>今月のサポート手数料</h2></div>
+            <div class="card-body" style="text-align:center;padding:32px">
+              <div class="stat-value" style="font-size:36px">1,250,000円</div>
+              <div class="stat-sub" style="margin-top:8px">2026年6月（12件）</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h2>最近の活動履歴</h2></div>
+            <div class="card-body">
+              <ul class="activity-list">
+                <li><span class="activity-time">06/25 16:30</span><span class="activity-text">山田 太郎 — 書類「住所確認書類」を確認中に変更（佐藤）</span></li>
+                <li><span class="activity-time">06/25 14:10</span><span class="activity-text">鈴木 花子 — 海外金融機関へ書類提出完了（田中）</span></li>
+                <li><span class="activity-time">06/24 11:00</span><span class="activity-text">新規申込受付 — 中村 さくら（バングラデシュ証券口座開設）</span></li>
+                <li><span class="activity-time">06/23 09:45</span><span class="activity-text">伊藤 美咲 — 口座開設完了（山本）</span></li>
+                <li><span class="activity-time">06/22 17:20</span><span class="activity-text">渡辺 健太 — 書類差戻し通知送信（田中）</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. 管理者向け申込管理 -->
+      <div class="view" id="view-admin-applications">
+        <div class="toolbar">
+          <input type="text" class="search-input" placeholder="申込ID・顧客名で検索...">
+          <select class="filter-select">
+            <option>すべてのステータス</option>
+            <option>申込受付</option>
+            <option>書類確認中</option>
+            <option>対応中</option>
+            <option>審査中</option>
+            <option>口座開設完了</option>
+          </select>
+          <div class="toolbar-spacer"></div>
+          <button class="btn btn-secondary btn-sm"><i class="fa-solid fa-download"></i> CSV出力</button>
+        </div>
+        <div class="card">
+          <div class="card-body" style="padding:0">
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>申込ID</th><th>顧客名</th><th>対象国</th><th>サービス種別</th>
+                    <th>ステータス</th><th>担当者</th><th>最終更新日</th><th></th>
+                  </tr>
+                </thead>
+                <tbody id="admin-applications-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 9. 管理者向け書類確認 -->
+      <div class="view" id="view-admin-documents">
+        <div id="admin-documents-content"></div>
+      </div>
+
+      <!-- 10. 管理者向け金融機関管理 -->
+      <div class="view" id="view-admin-institutions">
+        <div class="toolbar">
+          <input type="text" class="search-input" placeholder="金融機関名・国で検索...">
+          <select class="filter-select">
+            <option>すべてのステータス</option>
+            <option>連携中</option>
+            <option>審査中</option>
+            <option>非アクティブ</option>
+          </select>
+          <div class="toolbar-spacer"></div>
+          <button class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> 金融機関を追加</button>
+        </div>
+        <div class="card">
+          <div class="card-body" style="padding:0">
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>金融機関名</th><th>国</th><th>サービス種別</th><th>担当者名</th>
+                    <th>対応可能言語</th><th>必要書類</th><th>ステータス</th><th></th>
+                  </tr>
+                </thead>
+                <tbody id="admin-institutions-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="mockup-badge">v0.1 Mockup</div>
+
+<script src="app.js"></script>
+</body>
+</html>
