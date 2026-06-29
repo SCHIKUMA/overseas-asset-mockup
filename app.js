@@ -1,4 +1,27 @@
-/* 海外資産管理サポート v0.1 - 画面遷移・ダミーデータ */
+/* 海外資産管理サポート v0.2 — 画面遷移・ダミーデータ
+ * ------------------------------------------------------------------
+ * 画面の追加方法（これだけで完結します）:
+ *   1. SCREENS に { title, nav?, render? } を1エントリ追加
+ *   2. 描画が必要なら render 関数を実装
+ *   3. ホストHTMLに <div class="view" id="view-<id>"> の器を追加
+ *   ※ switch文・タイトル表・ナビ配列の編集は不要
+ *
+ * 設計メモ:
+ *   - 状態は state オブジェクトに集約
+ *   - 画面遷移/操作は data-* 属性 + イベント委譲（インラインonclickは不使用）
+ *   - 動的値は必ず esc() を通して挿入（実データ投入時のXSS対策）
+ *   - 繰り返すマークアップは下部のコンポーネント関数に集約
+ * ================================================================== */
+
+/* ============================================================
+ * 共通文言・データ
+ * ========================================================== */
+
+const COMMON_NOTICES = [
+  '当社は投資助言を行いません',
+  '金融商品の購入判断はお客様自身で行います',
+  '口座開設や送金の可否は海外金融機関の審査により決定されます'
+];
 
 const SERVICES = [
   {
@@ -13,7 +36,7 @@ const SERVICES = [
     overview: 'バングラデシュの証券会社における口座開設手続きをサポートします。必要書類の案内、提出フォーマットの確認、海外金融機関への書類提出代行、進捗管理を行います。',
     support: ['口座開設に必要な書類リストの提供', '書類フォーマット・記入方法の案内', '海外金融機関への書類提出サポート', '審査状況の進捗確認・連絡', '開設完了後の送金手続き案内'],
     requiredDocs: ['パスポート（有効期限内）', '住所確認書類（発行3ヶ月以内）', 'マイナンバー関連書類', '銀行口座情報（通帳コピー等）', '自己資金の原資確認書類'],
-    notices: ['当社は投資助言を行いません', '金融商品の購入判断はお客様自身で行います', '口座開設や送金の可否は海外金融機関の審査により決定されます']
+    notices: COMMON_NOTICES
   },
   {
     id: 'kz-securities',
@@ -27,7 +50,7 @@ const SERVICES = [
     overview: 'カザフスタンの証券口座開設に関する手続き支援サービスです。現地金融機関の要件に沿った書類準備から、申込進捗の管理まで一貫してサポートします。',
     support: ['現地金融機関の口座開設要件の案内', '必要書類の翻訳・公証に関する情報提供', '申込書類の確認・提出サポート', '審査ステータスの定期報告', '口座開設後の送金ルート案内'],
     requiredDocs: ['パスポート（公証付きコピー推奨）', '住所確認書類', 'マイナンバー関連書類', '銀行口座情報', '在留カード（コピー）', '追加：原資確認書類'],
-    notices: ['当社は投資助言を行いません', '金融商品の購入判断はお客様自身で行います', '口座開設や送金の可否は海外金融機関の審査により決定されます']
+    notices: COMMON_NOTICES
   },
   {
     id: 'kh-bank',
@@ -41,7 +64,7 @@ const SERVICES = [
     overview: 'カンボジアのACLEDA Bankにおける銀行口座開設手続きをサポートします。口座開設に必要な書類の準備支援、現地金融機関とのやり取り、進捗管理を提供します。',
     support: ['口座開設申込書類の案内・確認', '現地銀行への書類提出サポート', '審査進捗のモニタリング', '口座開設完了の連絡', '海外送金手続きの案内'],
     requiredDocs: ['パスポート', '住所確認書類', 'マイナンバー関連書類', '銀行口座情報（日本国内）'],
-    notices: ['当社は投資助言を行いません', '金融商品の購入判断はお客様自身で行います', '口座開設や送金の可否は海外金融機関の審査により決定されます']
+    notices: COMMON_NOTICES
   },
   {
     id: 'overseas-deposit',
@@ -55,7 +78,7 @@ const SERVICES = [
     overview: '海外金融機関の定期預金口座開設に関する手続き支援サービスです。対象金融機関の選定はお客様ご自身で行い、当社は手続きに必要な書類準備と進捗管理をサポートします。',
     support: ['対象金融機関の口座開設要件案内', '必要書類チェックリストの提供', '書類提出・審査進捗の管理', '口座開設後の送金手続きサポート', '手続きに関する問い合わせ対応'],
     requiredDocs: ['パスポート', '住所確認書類', 'マイナンバー関連書類', '銀行口座情報', '資金原資に関する確認書類'],
-    notices: ['当社は投資助言を行いません', '金融商品の購入判断はお客様自身で行います', '口座開設や送金の可否は海外金融機関の審査により決定されます']
+    notices: COMMON_NOTICES
   }
 ];
 
@@ -93,41 +116,52 @@ const INSTITUTIONS = [
   { name: 'Phnom Penh Commercial Bank', country: 'カンボジア', type: '銀行口座開設', contact: '—', langs: '英語・クメール語', docs: 'パスポート、住所確認書類', status: 'inactive' }
 ];
 
-const USER_NAV = [
-  { id: 'user-dashboard', icon: 'fa-gauge-high', label: 'ダッシュボード' },
-  { id: 'service-list', icon: 'fa-list', label: 'サービス一覧' },
-  { id: 'application-status', icon: 'fa-clock-rotate-left', label: '申込状況' },
-  { id: 'documents', icon: 'fa-file-lines', label: '必要書類' },
-  { id: 'transfer-support', icon: 'fa-money-bill-transfer', label: '送金サポート' },
-  { id: 'transaction-history', icon: 'fa-receipt', label: '取引履歴' }
-];
-
-const ADMIN_NAV = [
-  { id: 'admin-dashboard', icon: 'fa-gauge-high', label: 'ダッシュボード' },
-  { id: 'admin-applications', icon: 'fa-clipboard-list', label: '申込管理' },
-  { id: 'admin-documents', icon: 'fa-file-circle-check', label: '書類確認' },
-  { id: 'admin-institutions', icon: 'fa-building-columns', label: '金融機関管理' }
-];
-
-let currentRole = 'user';
-let currentView = 'user-dashboard';
-let currentServiceId = null;
-let applicationStep = 1;
-
-const VIEW_TITLES = {
-  'user-dashboard': 'ダッシュボード',
-  'service-list': 'サービス一覧',
-  'service-detail': 'サービス詳細',
-  'application-flow': 'サポート申込',
-  'documents': '必要書類',
-  'application-status': '申込状況・進捗確認',
-  'transfer-support': '送金サポート',
-  'transaction-history': '取引履歴',
-  'admin-dashboard': '管理者ダッシュボード',
-  'admin-applications': '申込管理',
-  'admin-documents': '書類確認',
-  'admin-institutions': '金融機関管理'
+/* 「現在ログイン中のユーザー / 進行中の申込」— 実API接続時はここだけ差し替える */
+const CURRENT_USER = {
+  name: '山田 太郎',
+  email: 'yamada@example.com',
+  tel: '090-1234-5678',
+  bitwallet: 'BW-2024-00891',
+  address: '東京都渋谷区〇〇 1-2-3'
 };
+
+const CURRENT_APP = {
+  id: 'APP-2026-0043',          // 申込完了時に発番される想定のID
+  trackingId: 'APP-2026-0042',  // 進捗確認中の既存案件
+  service: 'カンボジア銀行口座開設サポート',
+  institution: 'ACLEDA Bank',
+  appliedAt: '2026/06/01',
+  assignee: '佐藤'
+};
+
+/* ============================================================
+ * 状態
+ * ========================================================== */
+
+const state = {
+  role: 'user',           // 'user' | 'admin'
+  view: 'user-dashboard',
+  serviceId: null,
+  step: 1
+};
+
+/* ============================================================
+ * 汎用ヘルパー
+ * ========================================================== */
+
+/** innerHTML へ挿し込む動的値は必ずこれを通す（XSS / 表示崩れ対策） */
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g,
+  (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+/** id を持つ要素へ HTML を流し込む（要素が無ければ何もしない） */
+function mount(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+
+/* ============================================================
+ * 再利用コンポーネント（マークアップの単一情報源）
+ * ========================================================== */
 
 function statusBadge(status) {
   const map = {
@@ -135,104 +169,87 @@ function statusBadge(status) {
     '申込受付': 'badge-blue', '書類確認中': 'badge-amber', '書類確認待ち': 'badge-amber',
     '対応中': 'badge-blue', '審査中': 'badge-amber', '口座開設完了': 'badge-green'
   };
-  return `<span class="badge ${map[status] || 'badge-gray'}">${status}</span>`;
+  return `<span class="badge ${map[status] || 'badge-gray'}">${esc(status)}</span>`;
 }
 
 function institutionStatus(status) {
   const labels = { active: '連携中', pending: '審査中', inactive: '非アクティブ' };
-  return `<span class="status-dot ${status}"></span>${labels[status]}`;
+  return `<span class="status-dot ${esc(status)}"></span>${esc(labels[status] || status)}`;
 }
 
-function renderNav() {
-  const nav = document.getElementById('sidebar-nav');
-  const items = currentRole === 'user' ? USER_NAV : ADMIN_NAV;
-  nav.innerHTML = `<div class="nav-section-title">${currentRole === 'user' ? 'ユーザーメニュー' : '管理者メニュー'}</div>` +
-    items.map(item => `
-      <button class="nav-item ${currentView === item.id ? 'active' : ''}" data-view="${item.id}">
-        <i class="fa-solid ${item.icon}"></i> ${item.label}
-      </button>
-    `).join('');
-  nav.querySelectorAll('.nav-item').forEach(btn => {
-    btn.addEventListener('click', () => navigateTo(btn.dataset.view));
-  });
+/** [ラベル, 値] の配列から confirm-table を生成（値はテキストとして安全に挿入） */
+function kvTable(rows) {
+  return `<table class="confirm-table">${rows
+    .map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`)
+    .join('')}</table>`;
 }
 
-function navigateTo(viewId, opts = {}) {
-  if (opts.serviceId) currentServiceId = opts.serviceId;
-  if (opts.step) applicationStep = opts.step;
-  currentView = viewId;
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  const el = document.getElementById('view-' + viewId);
-  if (el) el.classList.add('active');
-  document.getElementById('header-title').textContent = VIEW_TITLES[viewId] || '';
-  renderNav();
-  renderCurrentView();
+/** 文字列配列から <ul><li>…</li></ul> を生成 */
+function bulletList(items) {
+  return `<ul>${items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
 }
 
-function renderCurrentView() {
-  switch (currentView) {
-    case 'service-list': renderServiceList(); break;
-    case 'service-detail': renderServiceDetail(); break;
-    case 'application-flow': renderApplicationFlow(); break;
-    case 'documents': renderDocuments(); break;
-    case 'application-status': renderTimeline(); break;
-    case 'admin-applications': renderAdminApplications(); break;
-    case 'admin-documents': renderAdminDocuments(); break;
-    case 'admin-institutions': renderAdminInstitutions(); break;
-  }
+/** 書類リスト（必要書類画面・申込フローStep3で共用） */
+function docList(docs, uploadLabel) {
+  return `<div class="doc-list">${docs.map((d) => `
+    <div class="doc-item">
+      <div class="doc-info">
+        <div class="doc-icon"><i class="fa-solid fa-file"></i></div>
+        <div><div class="doc-name">${esc(d.name)}</div><div class="doc-desc">${esc(d.desc)}</div></div>
+      </div>
+      <div class="doc-actions">${statusBadge(d.status)}<div class="upload-zone"><i class="fa-solid fa-cloud-arrow-up"></i> ${esc(uploadLabel)}</div></div>
+    </div>`).join('')}</div>`;
 }
+
+/* ============================================================
+ * 各画面の描画
+ * ========================================================== */
 
 function renderServiceList() {
-  const grid = document.getElementById('service-grid');
-  if (!grid) return;
-  grid.innerHTML = SERVICES.map(s => `
+  mount('service-grid', SERVICES.map((s) => `
     <div class="service-card">
       <div class="service-card-header">
         <div>
-          <span class="country-badge"><i class="fa-solid fa-globe"></i> ${s.country}</span>
-          <h3>${s.name}</h3>
+          <span class="country-badge"><i class="fa-solid fa-globe"></i> ${esc(s.country)}</span>
+          <h3>${esc(s.name)}</h3>
         </div>
       </div>
-      <div class="service-type">${s.type}</div>
+      <div class="service-type">${esc(s.type)}</div>
       <div class="service-meta">
-        <div class="meta-item"><span class="label">想定期間</span><span class="value">${s.period}</span></div>
-        <div class="meta-item"><span class="label">サポート手数料</span><span class="value">${s.fee}</span></div>
-        <div class="meta-item" style="grid-column:1/-1"><span class="label">必要書類の目安</span><span class="value">${s.docs}</span></div>
+        <div class="meta-item"><span class="label">想定期間</span><span class="value">${esc(s.period)}</span></div>
+        <div class="meta-item"><span class="label">サポート手数料</span><span class="value">${esc(s.fee)}</span></div>
+        <div class="meta-item" style="grid-column:1/-1"><span class="label">必要書類の目安</span><span class="value">${esc(s.docs)}</span></div>
       </div>
-      <button class="btn btn-outline btn-sm" onclick="navigateTo('service-detail', {serviceId:'${s.id}'})">詳細を見る</button>
-    </div>
-  `).join('');
+      <button class="btn btn-outline btn-sm" data-view="service-detail" data-service="${esc(s.id)}">詳細を見る</button>
+    </div>`).join(''));
 }
 
 function renderServiceDetail() {
-  const s = SERVICES.find(x => x.id === currentServiceId) || SERVICES[0];
-  currentServiceId = s.id;
-  const el = document.getElementById('service-detail-content');
-  if (!el) return;
-  el.innerHTML = `
-    <div class="breadcrumb"><a onclick="navigateTo('service-list')">サービス一覧</a> &gt; ${s.name}</div>
+  const s = SERVICES.find((x) => x.id === state.serviceId) || SERVICES[0];
+  state.serviceId = s.id;
+  mount('service-detail-content', `
+    <div class="breadcrumb"><a data-view="service-list">サービス一覧</a> &gt; ${esc(s.name)}</div>
     <div class="card">
-      <div class="card-header"><h2>${s.name}</h2><span class="country-badge"><i class="fa-solid fa-globe"></i> ${s.country}</span></div>
+      <div class="card-header"><h2>${esc(s.name)}</h2><span class="country-badge"><i class="fa-solid fa-globe"></i> ${esc(s.country)}</span></div>
       <div class="card-body">
-        <div class="detail-section"><h3>サービス概要</h3><p>${s.overview}</p></div>
+        <div class="detail-section"><h3>サービス概要</h3><p>${esc(s.overview)}</p></div>
         <div class="grid-2">
-          <div class="detail-section"><h3>対象国</h3><p>${s.country}</p></div>
-          <div class="detail-section"><h3>対象金融機関</h3><p>${s.institution}</p></div>
+          <div class="detail-section"><h3>対象国</h3><p>${esc(s.country)}</p></div>
+          <div class="detail-section"><h3>対象金融機関</h3><p>${esc(s.institution)}</p></div>
         </div>
-        <div class="detail-section"><h3>サポート内容</h3><ul>${s.support.map(x => `<li>${x}</li>`).join('')}</ul></div>
-        <div class="detail-section"><h3>必要書類</h3><ul>${s.requiredDocs.map(x => `<li>${x}</li>`).join('')}</ul></div>
-        <div class="detail-section"><h3>サポート手数料・期間</h3><p>${s.fee} ／ 想定期間：${s.period}</p></div>
+        <div class="detail-section"><h3>サポート内容</h3>${bulletList(s.support)}</div>
+        <div class="detail-section"><h3>必要書類</h3>${bulletList(s.requiredDocs)}</div>
+        <div class="detail-section"><h3>サポート手数料・期間</h3><p>${esc(s.fee)} ／ 想定期間：${esc(s.period)}</p></div>
         <div class="notice-box">
           <h4><i class="fa-solid fa-triangle-exclamation"></i> 注意事項</h4>
-          <ul>${s.notices.map(x => `<li>${x}</li>`).join('')}</ul>
+          ${bulletList(s.notices)}
         </div>
         <div class="btn-group">
-          <button class="btn btn-primary" onclick="navigateTo('application-flow', {serviceId:'${s.id}', step:1})"><i class="fa-solid fa-pen-to-square"></i> このサービスに申し込む</button>
-          <button class="btn btn-secondary" onclick="navigateTo('service-list')">一覧に戻る</button>
+          <button class="btn btn-primary" data-view="application-flow" data-service="${esc(s.id)}" data-step="1"><i class="fa-solid fa-pen-to-square"></i> このサービスに申し込む</button>
+          <button class="btn btn-secondary" data-view="service-list">一覧に戻る</button>
         </div>
       </div>
-    </div>
-  `;
+    </div>`);
 }
 
 function renderStepsBar(step) {
@@ -242,191 +259,174 @@ function renderStepsBar(step) {
     let cls = '';
     if (n < step) cls = 'done';
     else if (n === step) cls = 'active';
-    return `<div class="step-item ${cls}"><div class="step-circle">${n < step ? '<i class="fa-solid fa-check"></i>' : n}</div><span class="step-label">${label}</span></div>`;
+    return `<div class="step-item ${cls}"><div class="step-circle">${n < step ? '<i class="fa-solid fa-check"></i>' : n}</div><span class="step-label">${esc(label)}</span></div>`;
   }).join('')}</div>`;
 }
 
+/* 申込フローの各ステップ本文をデータ駆動で定義（ステップ追加はここに1関数足すだけ） */
+const FLOW_STEPS = {
+  1: (s) => `
+    <h3 style="margin-bottom:16px;font-size:15px;">Step 1：サービス選択</h3>
+    <p style="color:var(--gray-500);margin-bottom:16px;font-size:13px;">申し込むサービスを確認してください。</p>
+    ${kvTable([
+      ['サービス名', s.name],
+      ['対象国', s.country],
+      ['サービス種別', s.type],
+      ['サポート手数料', s.fee]
+    ])}
+    <div class="btn-group" style="margin-top:24px">
+      <button class="btn btn-primary" data-action="flow-step" data-step="2">次へ</button>
+      <button class="btn btn-secondary" data-view="service-list">サービスを変更</button>
+    </div>`,
+
+  2: () => `
+    <h3 style="margin-bottom:16px;font-size:15px;">Step 2：お客様情報確認</h3>
+    <div class="form-row">
+      <div class="form-group"><label>お名前</label><input type="text" value="${esc(CURRENT_USER.name)}" readonly></div>
+      <div class="form-group"><label>メールアドレス</label><input type="text" value="${esc(CURRENT_USER.email)}" readonly></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>電話番号</label><input type="text" value="${esc(CURRENT_USER.tel)}" readonly></div>
+      <div class="form-group"><label>bitwallet会員ID</label><input type="text" value="${esc(CURRENT_USER.bitwallet)}" readonly></div>
+    </div>
+    <div class="form-group"><label>住所</label><input type="text" value="${esc(CURRENT_USER.address)}" readonly></div>
+    <p style="font-size:12px;color:var(--gray-500);margin-top:8px;">※ 登録情報はbitwalletアカウントから取得しています。変更が必要な場合はアカウント設定から更新してください。</p>
+    <div class="btn-group" style="margin-top:24px">
+      <button class="btn btn-secondary" data-action="flow-step" data-step="1">戻る</button>
+      <button class="btn btn-primary" data-action="flow-step" data-step="3">次へ</button>
+    </div>`,
+
+  3: () => `
+    <h3 style="margin-bottom:16px;font-size:15px;">Step 3：必要書類アップロード</h3>
+    <p style="color:var(--gray-500);margin-bottom:16px;font-size:13px;">以下の書類をアップロードしてください。</p>
+    ${docList(DOCUMENTS, '選択')}
+    <div class="btn-group" style="margin-top:24px">
+      <button class="btn btn-secondary" data-action="flow-step" data-step="2">戻る</button>
+      <button class="btn btn-primary" data-action="flow-step" data-step="4">次へ</button>
+    </div>`,
+
+  4: (s) => `
+    <h3 style="margin-bottom:16px;font-size:15px;">Step 4：サポート申込内容確認</h3>
+    ${kvTable([
+      ['サービス名', s.name],
+      ['お客様名', CURRENT_USER.name],
+      ['対象国', s.country],
+      ['対象金融機関', s.institution],
+      ['サポート手数料', s.fee],
+      ['提出書類', 'パスポート（承認済）、住所確認書類（確認中）、他3点（未提出）']
+    ])}
+    <div class="notice-box" style="margin-top:16px">
+      <h4>ご確認ください</h4>
+      ${bulletList(COMMON_NOTICES)}
+    </div>
+    <div class="btn-group" style="margin-top:24px">
+      <button class="btn btn-secondary" data-action="flow-step" data-step="3">戻る</button>
+      <button class="btn btn-primary" data-action="flow-step" data-step="5"><i class="fa-solid fa-paper-plane"></i> 申し込む</button>
+    </div>`,
+
+  5: () => `
+    <div class="complete-box">
+      <div class="complete-icon"><i class="fa-solid fa-check"></i></div>
+      <h2>申込が完了しました</h2>
+      <p>申込ID：<strong>${esc(CURRENT_APP.id)}</strong><br>サポート担当者より2営業日以内にご連絡いたします。</p>
+      <div class="btn-group" style="justify-content:center">
+        <button class="btn btn-primary" data-view="application-status">申込状況を確認</button>
+        <button class="btn btn-secondary" data-view="user-dashboard">ダッシュボードへ</button>
+      </div>
+    </div>`
+};
+
 function renderApplicationFlow() {
-  const s = SERVICES.find(x => x.id === currentServiceId) || SERVICES[2];
-  const el = document.getElementById('application-flow-content');
-  if (!el) return;
-
-  let body = '';
-  if (applicationStep === 1) {
-    body = `
-      <h3 style="margin-bottom:16px;font-size:15px;">Step 1：サービス選択</h3>
-      <p style="color:var(--gray-500);margin-bottom:16px;font-size:13px;">申し込むサービスを確認してください。</p>
-      <table class="confirm-table">
-        <tr><th>サービス名</th><td>${s.name}</td></tr>
-        <tr><th>対象国</th><td>${s.country}</td></tr>
-        <tr><th>サービス種別</th><td>${s.type}</td></tr>
-        <tr><th>サポート手数料</th><td>${s.fee}</td></tr>
-      </table>
-      <div class="btn-group" style="margin-top:24px">
-        <button class="btn btn-primary" onclick="applicationStep=2;renderApplicationFlow()">次へ</button>
-        <button class="btn btn-secondary" onclick="navigateTo('service-list')">サービスを変更</button>
-      </div>`;
-  } else if (applicationStep === 2) {
-    body = `
-      <h3 style="margin-bottom:16px;font-size:15px;">Step 2：お客様情報確認</h3>
-      <div class="form-row">
-        <div class="form-group"><label>お名前</label><input type="text" value="山田 太郎" readonly></div>
-        <div class="form-group"><label>メールアドレス</label><input type="text" value="yamada@example.com" readonly></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>電話番号</label><input type="text" value="090-1234-5678" readonly></div>
-        <div class="form-group"><label>bitwallet会員ID</label><input type="text" value="BW-2024-00891" readonly></div>
-      </div>
-      <div class="form-group"><label>住所</label><input type="text" value="東京都渋谷区〇〇 1-2-3" readonly></div>
-      <p style="font-size:12px;color:var(--gray-500);margin-top:8px;">※ 登録情報はbitwalletアカウントから取得しています。変更が必要な場合はアカウント設定から更新してください。</p>
-      <div class="btn-group" style="margin-top:24px">
-        <button class="btn btn-secondary" onclick="applicationStep=1;renderApplicationFlow()">戻る</button>
-        <button class="btn btn-primary" onclick="applicationStep=3;renderApplicationFlow()">次へ</button>
-      </div>`;
-  } else if (applicationStep === 3) {
-    body = `
-      <h3 style="margin-bottom:16px;font-size:15px;">Step 3：必要書類アップロード</h3>
-      <p style="color:var(--gray-500);margin-bottom:16px;font-size:13px;">以下の書類をアップロードしてください。</p>
-      <div class="doc-list">${DOCUMENTS.map(d => `
-        <div class="doc-item">
-          <div class="doc-info">
-            <div class="doc-icon"><i class="fa-solid fa-file"></i></div>
-            <div><div class="doc-name">${d.name}</div><div class="doc-desc">${d.desc}</div></div>
-          </div>
-          <div class="doc-actions">${statusBadge(d.status)}<div class="upload-zone"><i class="fa-solid fa-cloud-arrow-up"></i> 選択</div></div>
-        </div>`).join('')}
-      </div>
-      <div class="btn-group" style="margin-top:24px">
-        <button class="btn btn-secondary" onclick="applicationStep=2;renderApplicationFlow()">戻る</button>
-        <button class="btn btn-primary" onclick="applicationStep=4;renderApplicationFlow()">次へ</button>
-      </div>`;
-  } else if (applicationStep === 4) {
-    body = `
-      <h3 style="margin-bottom:16px;font-size:15px;">Step 4：サポート申込内容確認</h3>
-      <table class="confirm-table">
-        <tr><th>サービス名</th><td>${s.name}</td></tr>
-        <tr><th>お客様名</th><td>山田 太郎</td></tr>
-        <tr><th>対象国</th><td>${s.country}</td></tr>
-        <tr><th>対象金融機関</th><td>${s.institution}</td></tr>
-        <tr><th>サポート手数料</th><td>${s.fee}</td></tr>
-        <tr><th>提出書類</th><td>パスポート（承認済）、住所確認書類（確認中）、他3点（未提出）</td></tr>
-      </table>
-      <div class="notice-box" style="margin-top:16px">
-        <h4>ご確認ください</h4>
-        <ul>
-          <li>当社は投資助言を行いません</li>
-          <li>金融商品の購入判断はお客様自身で行います</li>
-          <li>口座開設や送金の可否は海外金融機関の審査により決定されます</li>
-        </ul>
-      </div>
-      <div class="btn-group" style="margin-top:24px">
-        <button class="btn btn-secondary" onclick="applicationStep=3;renderApplicationFlow()">戻る</button>
-        <button class="btn btn-primary" onclick="applicationStep=5;renderApplicationFlow()"><i class="fa-solid fa-paper-plane"></i> 申し込む</button>
-      </div>`;
-  } else {
-    body = `
-      <div class="complete-box">
-        <div class="complete-icon"><i class="fa-solid fa-check"></i></div>
-        <h2>申込が完了しました</h2>
-        <p>申込ID：<strong>APP-2026-0043</strong><br>サポート担当者より2営業日以内にご連絡いたします。</p>
-        <div class="btn-group" style="justify-content:center">
-          <button class="btn btn-primary" onclick="navigateTo('application-status')">申込状況を確認</button>
-          <button class="btn btn-secondary" onclick="navigateTo('user-dashboard')">ダッシュボードへ</button>
-        </div>
-      </div>`;
-  }
-
-  el.innerHTML = renderStepsBar(applicationStep) + `<div class="step-content">${body}</div>`;
+  const s = SERVICES.find((x) => x.id === state.serviceId) || SERVICES[2];
+  const body = (FLOW_STEPS[state.step] || FLOW_STEPS[1])(s);
+  mount('application-flow-content', renderStepsBar(state.step) + `<div class="step-content">${body}</div>`);
 }
 
 function renderDocuments() {
-  const el = document.getElementById('documents-content');
-  if (!el) return;
-  el.innerHTML = `
-    <div class="info-banner"><i class="fa-solid fa-circle-info"></i> 申込案件：カンボジア銀行口座開設サポート（APP-2026-0042）</div>
-    <div class="card"><div class="card-header"><h2>提出書類一覧</h2></div><div class="card-body"><div class="doc-list">
-      ${DOCUMENTS.map(d => `
-        <div class="doc-item">
-          <div class="doc-info">
-            <div class="doc-icon"><i class="fa-solid fa-file"></i></div>
-            <div><div class="doc-name">${d.name}</div><div class="doc-desc">${d.desc}</div></div>
-          </div>
-          <div class="doc-actions">${statusBadge(d.status)}<div class="upload-zone"><i class="fa-solid fa-cloud-arrow-up"></i> アップロード</div></div>
-        </div>`).join('')}
-    </div></div></div>`;
+  mount('documents-content', `
+    <div class="info-banner"><i class="fa-solid fa-circle-info"></i> 申込案件：${esc(CURRENT_APP.service)}（${esc(CURRENT_APP.trackingId)}）</div>
+    <div class="card"><div class="card-header"><h2>提出書類一覧</h2></div><div class="card-body">
+      ${docList(DOCUMENTS, 'アップロード')}
+    </div></div>`);
 }
 
 function renderTimeline() {
-  const el = document.getElementById('timeline-content');
-  if (!el) return;
-  el.innerHTML = `
+  mount('timeline-content', `
     <div class="grid-2">
       <div class="card">
         <div class="card-header"><h2>申込情報</h2>${statusBadge('審査中')}</div>
         <div class="card-body">
-          <table class="confirm-table">
-            <tr><th>申込ID</th><td>APP-2026-0042</td></tr>
-            <tr><th>サービス</th><td>カンボジア銀行口座開設サポート</td></tr>
-            <tr><th>対象金融機関</th><td>ACLEDA Bank</td></tr>
-            <tr><th>申込日</th><td>2026/06/01</td></tr>
-            <tr><th>担当者</th><td>佐藤</td></tr>
-          </table>
+          ${kvTable([
+            ['申込ID', CURRENT_APP.trackingId],
+            ['サービス', CURRENT_APP.service],
+            ['対象金融機関', CURRENT_APP.institution],
+            ['申込日', CURRENT_APP.appliedAt],
+            ['担当者', CURRENT_APP.assignee]
+          ])}
         </div>
       </div>
       <div class="card">
         <div class="card-header"><h2>進捗タイムライン</h2></div>
         <div class="card-body">
           <div class="timeline">
-            ${TIMELINE.map(t => `
+            ${TIMELINE.map((t) => `
               <div class="timeline-item ${t.status === 'done' ? 'done' : t.status === 'active' ? 'active' : ''}">
                 <div class="timeline-dot"></div>
-                <div class="timeline-date">${t.date}</div>
-                <div class="timeline-title">${t.title}</div>
-                <div class="timeline-desc">${t.desc}</div>
+                <div class="timeline-date">${esc(t.date)}</div>
+                <div class="timeline-title">${esc(t.title)}</div>
+                <div class="timeline-desc">${esc(t.desc)}</div>
               </div>`).join('')}
           </div>
         </div>
       </div>
-    </div>`;
+    </div>`);
 }
 
 function renderAdminApplications() {
-  const tbody = document.getElementById('admin-applications-tbody');
-  if (!tbody) return;
-  tbody.innerHTML = ADMIN_APPLICATIONS.map(a => `
+  mount('admin-applications-tbody', ADMIN_APPLICATIONS.map((a) => `
     <tr>
-      <td><strong>${a.id}</strong></td>
-      <td>${a.name}</td>
-      <td>${a.country}</td>
-      <td>${a.type}</td>
+      <td><strong>${esc(a.id)}</strong></td>
+      <td>${esc(a.name)}</td>
+      <td>${esc(a.country)}</td>
+      <td>${esc(a.type)}</td>
       <td>${statusBadge(a.status)}</td>
-      <td>${a.assignee}</td>
-      <td>${a.updated}</td>
-      <td><button class="btn btn-outline btn-sm" onclick="navigateTo('admin-documents')">詳細</button></td>
-    </tr>`).join('');
+      <td>${esc(a.assignee)}</td>
+      <td>${esc(a.updated)}</td>
+      <td><button class="btn btn-outline btn-sm" data-view="admin-documents" data-app="${esc(a.id)}">詳細</button></td>
+    </tr>`).join(''));
 }
 
 function renderAdminDocuments() {
-  const el = document.getElementById('admin-documents-content');
-  if (!el) return;
-  el.innerHTML = `
+  const selected = ADMIN_APPLICATIONS[0];
+  // 顧客一覧は申込データから先頭数件を表示
+  const customers = ADMIN_APPLICATIONS.slice(0, 3).map((a, i) => `
+    <div class="customer-list-item ${i === 0 ? 'active' : ''}">
+      <div class="name">${esc(a.name)}</div>
+      <div class="sub">${esc(a.id)} ／ ${esc(a.country)}</div>
+    </div>`).join('');
+
+  const reviewRows = DOCUMENTS.map((d) => {
+    const opts = ['未提出', '確認中', '承認済', '差戻し']
+      .map((o) => `<option ${d.status === o ? 'selected' : ''}>${esc(o)}</option>`).join('');
+    return `
+      <div class="review-doc-row">
+        <div><strong>${esc(d.name)}</strong><div style="font-size:11px;color:var(--gray-500)">${esc(d.desc)}</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select class="status-select">${opts}</select>
+          <button class="btn btn-outline btn-sm">プレビュー</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  mount('admin-documents-content', `
     <div class="review-layout">
       <div class="card"><div class="card-header"><h2>顧客一覧</h2></div><div class="card-body" style="padding:8px">
-        <div class="customer-list-item active"><div class="name">山田 太郎</div><div class="sub">APP-2026-0042 ／ カンボジア</div></div>
-        <div class="customer-list-item"><div class="name">鈴木 花子</div><div class="sub">APP-2026-0041 ／ バングラデシュ</div></div>
-        <div class="customer-list-item"><div class="name">渡辺 健太</div><div class="sub">APP-2026-0038 ／ カンボジア</div></div>
+        ${customers}
       </div></div>
       <div class="card">
-        <div class="card-header"><h2>山田 太郎 — 提出書類確認</h2><span class="badge badge-amber">書類確認中</span></div>
+        <div class="card-header"><h2>${esc(selected.name)} — 提出書類確認</h2><span class="badge badge-amber">書類確認中</span></div>
         <div class="card-body">
-          ${DOCUMENTS.map(d => `
-            <div class="review-doc-row">
-              <div><strong>${d.name}</strong><div style="font-size:11px;color:var(--gray-500)">${d.desc}</div></div>
-              <div style="display:flex;gap:8px;align-items:center">
-                <select class="status-select"><option ${d.status==='未提出'?'selected':''}>未提出</option><option ${d.status==='確認中'?'selected':''}>確認中</option><option ${d.status==='承認済'?'selected':''}>承認済</option><option ${d.status==='差戻し'?'selected':''}>差戻し</option></select>
-                <button class="btn btn-outline btn-sm">プレビュー</button>
-              </div>
-            </div>`).join('')}
+          ${reviewRows}
           <div class="form-group" style="margin-top:16px"><label>差戻し理由</label><textarea class="memo-area" placeholder="差戻しの場合、理由を入力してください"></textarea></div>
           <div class="form-group"><label>管理者メモ</label><textarea class="memo-area" placeholder="内部メモ（顧客には表示されません）">パスポートは承認済。住所確認書類は発行日を確認中。</textarea></div>
           <div class="btn-group" style="margin-top:16px">
@@ -435,46 +435,131 @@ function renderAdminDocuments() {
           </div>
         </div>
       </div>
-    </div>`;
+    </div>`);
 }
 
 function renderAdminInstitutions() {
-  const tbody = document.getElementById('admin-institutions-tbody');
-  if (!tbody) return;
-  tbody.innerHTML = INSTITUTIONS.map(i => `
+  mount('admin-institutions-tbody', INSTITUTIONS.map((i) => `
     <tr>
-      <td><strong>${i.name}</strong></td>
-      <td>${i.country}</td>
-      <td>${i.type}</td>
-      <td>${i.contact}</td>
-      <td>${i.langs}</td>
-      <td>${i.docs}</td>
+      <td><strong>${esc(i.name)}</strong></td>
+      <td>${esc(i.country)}</td>
+      <td>${esc(i.type)}</td>
+      <td>${esc(i.contact)}</td>
+      <td>${esc(i.langs)}</td>
+      <td>${esc(i.docs)}</td>
       <td>${institutionStatus(i.status)}</td>
       <td><button class="btn btn-outline btn-sm">編集</button></td>
-    </tr>`).join('');
+    </tr>`).join(''));
+}
+
+/* ============================================================
+ * 画面レジストリ（タイトル・ナビ・描画関数を1か所に集約）
+ *   nav が無い画面 = サイドメニューに出ない画面
+ *   render が無い画面 = 静的HTMLのみで描画する画面（ダッシュボード等）
+ * ========================================================== */
+
+const SCREENS = {
+  'user-dashboard':      { title: 'ダッシュボード',           nav: { role: 'user',  icon: 'fa-gauge-high',         label: 'ダッシュボード' } },
+  'service-list':        { title: 'サービス一覧',             nav: { role: 'user',  icon: 'fa-list',               label: 'サービス一覧' },   render: renderServiceList },
+  'service-detail':      { title: 'サービス詳細',                                                                                              render: renderServiceDetail },
+  'application-flow':    { title: 'サポート申込',                                                                                              render: renderApplicationFlow },
+  'application-status':  { title: '申込状況・進捗確認',         nav: { role: 'user',  icon: 'fa-clock-rotate-left',  label: '申込状況' },        render: renderTimeline },
+  'documents':           { title: '必要書類',                 nav: { role: 'user',  icon: 'fa-file-lines',         label: '必要書類' },        render: renderDocuments },
+  'transfer-support':    { title: '送金サポート',             nav: { role: 'user',  icon: 'fa-money-bill-transfer', label: '送金サポート' } },
+  'transaction-history': { title: '取引履歴',                 nav: { role: 'user',  icon: 'fa-receipt',            label: '取引履歴' } },
+  'admin-dashboard':     { title: '管理者ダッシュボード',       nav: { role: 'admin', icon: 'fa-gauge-high',         label: 'ダッシュボード' } },
+  'admin-applications':  { title: '申込管理',                 nav: { role: 'admin', icon: 'fa-clipboard-list',     label: '申込管理' },        render: renderAdminApplications },
+  'admin-documents':     { title: '書類確認',                 nav: { role: 'admin', icon: 'fa-file-circle-check',  label: '書類確認' },        render: renderAdminDocuments },
+  'admin-institutions':  { title: '金融機関管理',             nav: { role: 'admin', icon: 'fa-building-columns',   label: '金融機関管理' },    render: renderAdminInstitutions }
+};
+
+/* ============================================================
+ * ルーター / ナビゲーション
+ * ========================================================== */
+
+function renderNav() {
+  const items = Object.entries(SCREENS).filter(([, def]) => def.nav && def.nav.role === state.role);
+  mount('sidebar-nav',
+    `<div class="nav-section-title">${state.role === 'user' ? 'ユーザーメニュー' : '管理者メニュー'}</div>` +
+    items.map(([id, def]) => `
+      <button class="nav-item ${state.view === id ? 'active' : ''}" data-view="${esc(id)}">
+        <i class="fa-solid ${esc(def.nav.icon)}"></i> ${esc(def.nav.label)}
+      </button>`).join(''));
+}
+
+function navigateTo(viewId, opts = {}) {
+  if (!SCREENS[viewId]) return;
+  if (opts.serviceId) state.serviceId = opts.serviceId;
+  if (opts.step) state.step = opts.step;
+  state.view = viewId;
+
+  document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
+  document.getElementById('view-' + viewId)?.classList.add('active');
+
+  const titleEl = document.getElementById('header-title');
+  if (titleEl) titleEl.textContent = SCREENS[viewId].title || '';
+
+  renderNav();
+  renderCurrentView();
+}
+
+function renderCurrentView() {
+  SCREENS[state.view]?.render?.();
 }
 
 function switchRole(role) {
-  currentRole = role;
-  document.querySelectorAll('.role-tab').forEach(t => t.classList.toggle('active', t.dataset.role === role));
+  state.role = role;
+  document.querySelectorAll('.role-tab').forEach((t) => t.classList.toggle('active', t.dataset.role === role));
   const userEl = document.getElementById('header-username');
   const avatarEl = document.querySelector('.user-avatar');
   if (role === 'admin') {
-    userEl.textContent = '管理者：佐藤';
-    avatarEl.textContent = '佐';
+    if (userEl) userEl.textContent = '管理者：佐藤';
+    if (avatarEl) avatarEl.textContent = '佐';
   } else {
-    userEl.textContent = '山田 太郎 様';
-    avatarEl.textContent = '山';
+    if (userEl) userEl.textContent = '山田 太郎 様';
+    if (avatarEl) avatarEl.textContent = '山';
   }
   navigateTo(role === 'user' ? 'user-dashboard' : 'admin-dashboard');
 }
 
+/* ============================================================
+ * イベント委譲（インラインonclickの代わり）
+ *   data-role        … ロール切替タブ
+ *   data-action="flow-step" + data-step … 申込フローのステップ移動
+ *   data-view (+ data-service / data-step) … 画面遷移
+ * ========================================================== */
+
+function handleClick(e) {
+  const trg = e.target.closest('[data-role],[data-action],[data-view]');
+  if (!trg) return;
+
+  if (trg.dataset.role) {
+    switchRole(trg.dataset.role);
+    return;
+  }
+  if (trg.dataset.action === 'flow-step') {
+    state.step = Number(trg.dataset.step);
+    renderApplicationFlow();
+    return;
+  }
+  if (trg.dataset.view) {
+    navigateTo(trg.dataset.view, {
+      serviceId: trg.dataset.service,
+      step: trg.dataset.step ? Number(trg.dataset.step) : undefined
+    });
+  }
+}
+
+/* ============================================================
+ * 初期化
+ * ========================================================== */
+
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.role-tab').forEach(tab => {
-    tab.addEventListener('click', () => switchRole(tab.dataset.role));
-  });
+  document.addEventListener('click', handleClick);
   renderNav();
   renderCurrentView();
 });
 
+/* 静的HTML（ダッシュボード等）からの呼び出し互換のため公開。
+ * 新規マークアップでは data-view 属性を使ってください。 */
 window.navigateTo = navigateTo;
